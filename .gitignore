@@ -1,3 +1,9 @@
 *.pem
 __pycache__/
 *.pyc
+
+foxio-ja4/
+*.pcap
+*.pcapng
+*.db
+results.json
