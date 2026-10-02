@@ -1,4 +1,5 @@
 import json
+import sys
 
 from database import initialize, insert_observation
 
@@ -11,10 +12,10 @@ def first_value(record, prefix):
     return None
 
 
-def normalize_record(record):
+def normalize_record(record, application, notes=None):
     return {
         "device": "My MacBook",
-        "application": "Chrome",
+        "application": application,
         "src": record.get("src"),
         "dst": record.get("dst"),
         "srcport": record.get("srcport"),
@@ -23,16 +24,12 @@ def normalize_record(record):
         "ja4": first_value(record, "JA4"),
         "ja4h": first_value(record, "JA4H"),
         "ja4s": first_value(record, "JA4S"),
-        "notes": "Chrome test capture",
+        "notes": notes,
     }
 
 
 def load_results(filename):
-    with open(
-        filename,
-        "r",
-        encoding="utf-8",
-    ) as file:
+    with open(filename, "r", encoding="utf-8") as file:
         data = json.load(file)
 
     if isinstance(data, dict):
@@ -42,14 +39,27 @@ def load_results(filename):
 
 
 def main():
+    if len(sys.argv) < 3:
+        print(
+            "Usage: python import_results.py "
+            "<results.json> <application>"
+        )
+        sys.exit(1)
+
+    filename = sys.argv[1]
+    application = sys.argv[2]
+
     initialize()
 
-    records = load_results("results.json")
-
+    records = load_results(filename)
     count = 0
 
     for record in records:
-        observation = normalize_record(record)
+        observation = normalize_record(
+            record,
+            application,
+            notes=f"{application} controlled capture",
+        )
 
         if (
             observation["ja4"] is None
@@ -62,7 +72,8 @@ def main():
         count += 1
 
     print(
-        f"Imported {count} fingerprint observations."
+        f"Imported {count} observations "
+        f"for {application}."
     )
 
 
